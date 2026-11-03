@@ -1,0 +1,95 @@
+import {UseEventTarget} from './UseEventTarget'
+
+# useEventTarget
+
+处理 DOM target 的底层工具：把各种形态的「挂载目标」统一解析成真实元素，并提供一个能正确响应 ref 挂载时机的 `useEffect`。
+
+`useEventListener`、`useClickAway` 都基于它实现；写自己的 DOM hooks 时也可以直接复用。
+
+<UseEventTarget />
+
+## 为什么需要它
+
+`ref.current` 从 `null` 变成真实节点时不会触发重渲染，React 也就不会重跑 effect——所以依赖数组里放 ref 是没用的：
+
+```tsx
+// ❌ 首次渲染时 ref.current 还是 null，effect 跑一次就再也不会跑了
+useEffect(() => {
+  ref.current?.addEventListener('click', onClick)
+}, [ref.current])
+```
+
+`useEffectWithTarget` 故意不写依赖数组，每次渲染后重新解析一遍 target，再自己比对 `[element, ...deps]` 决定要不要重新执行，因此既能等到元素挂载，又不会每次渲染都解绑重绑。
+
+## BasicTarget
+
+挂载目标支持三种形态，不传则默认 `window`：
+
+```ts
+type BasicTarget =
+  | EventTarget                              // 直接传元素
+  | null
+  | RefObject<EventTarget | null | undefined> // 传 ref
+  | (() => EventTarget | null | undefined)    // 传一个返回元素的函数
+```
+
+```tsx
+useEffectWithTarget(effect, divRef)              // ref
+useEffectWithTarget(effect, () => document)      // 函数，适合 document / 动态查询
+useEffectWithTarget(effect, undefined)           // 默认 window
+```
+
+## getTargetElement
+
+把 `BasicTarget` 解析成真实元素，解析不到返回 `null`：
+
+```ts
+getTargetElement(undefined)        // window（SSR 下为 null）
+getTargetElement(element)          // element
+getTargetElement(ref)              // ref.current ?? null
+getTargetElement(() => element)    // element
+```
+
+## useEffectWithTarget
+
+```tsx
+useEffectWithTarget(
+  (element) => {
+    const onClick = () => console.log('clicked')
+    element.addEventListener('click', onClick)
+    // 返回清理函数，元素变化、依赖变化、组件卸载时都会调用
+    return () => element.removeEventListener('click', onClick)
+  },
+  boxRef,
+  [],
+)
+```
+
+行为要点：
+
+- target 解析不到元素时跳过本次执行，下次渲染后再试；
+- `[element, ...deps]` 全部没变就不重新执行，避免反复解绑重绑；
+- 元素或依赖变化时先调用上一次的清理函数，再执行新的副作用；
+- 组件卸载时调用清理函数。
+
+## API
+
+```ts
+type BasicTarget = EventTarget | null | RefObject<TargetValue> | (() => TargetValue)
+
+function getTargetElement(target: BasicTarget | undefined): EventTarget | null
+
+function useEffectWithTarget(
+  effect: (element: EventTarget) => void | (() => void),
+  target: BasicTarget | undefined,
+  deps?: unknown[],
+): void
+```
+
+### useEffectWithTarget 参数
+
+| 参数     | 说明                                     | 类型                                            | 默认值 |
+| -------- | ---------------------------------------- | ----------------------------------------------- | ------ |
+| `effect` | 拿到真实元素后执行的副作用，可返回清理函数 | `(element: EventTarget) => void \| (() => void)` | -      |
+| `target` | 挂载目标，不传默认 `window`              | `BasicTarget \| undefined`                      | -      |
+| `deps`   | 除元素之外的依赖项                       | `unknown[]`                                      | `[]`   |
