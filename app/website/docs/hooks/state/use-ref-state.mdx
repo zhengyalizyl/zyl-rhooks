@@ -1,0 +1,73 @@
+import {UseRefState} from './UseRefState'
+
+# useRefState
+
+和 `useState` 一样会触发重渲染，但额外返回一个始终同步的 ref，用来在闭包里读最新值。
+
+<UseRefState />
+
+## 用法
+
+```tsx
+import { useRefState } from '@zyl-rhooks/hooks'
+
+const [count, setCount, countRef] = useRefState(0)
+
+const start = () => {
+  setInterval(() => {
+    // 这里读 count 会一直是创建定时器那一刻的值，读 ref 才是最新的
+    console.log(countRef.current)
+  }, 1000)
+}
+```
+
+- `state`：用来渲染，和 `useState` 完全一致；
+- `setState`：引用稳定，支持直接传值和函数式更新；
+- `stateRef`：**调用 setter 后立刻就是新值**，不用等下一次渲染。
+
+```tsx
+setCount(1)
+console.log(countRef.current) // 1，不是 0
+```
+
+## 什么时候用
+
+定时器、事件回调、异步请求的 `then` 里需要读最新状态时。这些回调创建于某一次渲染，闭包捕获的是那一刻的 state，典型的「闭包陷阱」：
+
+```tsx
+// ❌ 永远打印 0
+useEffect(() => {
+  const timer = setInterval(() => console.log(count), 1000)
+  return () => clearInterval(timer)
+}, [])
+
+// ✅ 打印最新值，依赖数组还能保持为空，定时器不用反复重建
+useEffect(() => {
+  const timer = setInterval(() => console.log(countRef.current), 1000)
+  return () => clearInterval(timer)
+}, [])
+```
+
+只需要读 props 或已有 state 的最新值、不需要自己管状态时，用 [useRefValue](./use-ref-value) 更轻。
+
+## API
+
+```ts
+function useRefState<S>(
+  initialState: S | (() => S),
+): readonly [S, Dispatch<SetStateAction<S>>, { current: S }]
+```
+
+### 参数
+
+| 参数           | 说明                         | 类型                 | 默认值 |
+| -------------- | ---------------------------- | -------------------- | ------ |
+| `initialState` | 初始值，支持惰性初始化函数   | `S \| (() => S)`     | -      |
+
+### 返回值
+
+| 返回值     | 说明                                   | 类型                           |
+| ---------- | -------------------------------------- | ------------------------------ |
+| `state`    | 当前状态，变化会触发重渲染             | `S`                            |
+| `setState` | 更新状态，引用稳定                     | `Dispatch<SetStateAction<S>>`  |
+| `stateRef` | 始终同步的 ref，读取不受闭包影响       | `{ current: S }`               |
