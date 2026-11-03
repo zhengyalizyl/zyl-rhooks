@@ -1,0 +1,70 @@
+{
+  "name": "zyl-rhooks",
+  "version": "1.0.0",
+  "main": "index.js",
+  "packageManager": "pnpm@10.5.2",
+  "scripts": {
+    "prepare": "husky",
+    "lint": "eslint \"{packages,apps}/**/*.{js,jsx,ts,tsx}\"",
+    "spellcheck": "cspell lint --dot --gitignore --color --cache --show-suggestions \"{packages,apps}/**/*.{js,jsx,ts,tsx}\"",
+    "commit": "git-cz",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p apps/website",
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "test": "pnpm --filter=./packages/* test",
+    "test:cov": "pnpm --filter=./packages/* test:cov"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "lint-staged": {
+    "**/*.{js,jsx}": [
+      "eslint --fix",
+      "prettier --cache --write"
+    ],
+    "**/*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --cache --write --parser=typescript"
+    ]
+  },
+  "config": {
+    "commitizen": {
+      "path": "node_modules/cz-git"
+    }
+  },
+  "devDependencies": {
+    "@commitlint/cli": "21.2.4",
+    "@commitlint/config-conventional": "21.2.4",
+    "@cspell/dict-lorem-ipsum": "^4.0.5",
+    "@eslint/js": "9.35.0",
+    "@testing-library/react": "^16.3.3",
+    "@types/node": "^26.6.6",
+    "@types/react": "^18.2.21",
+    "@types/react-dom": "^18.2.7",
+    "@vitest/coverage-istanbul": "^5.0.5",
+    "commitizen": "4.3.2",
+    "commitlint": "21.2.4",
+    "cross-env": "^10.1.0",
+    "cspell": "^9.8.0",
+    "cz-git": "1.14.0",
+    "eslint": "9.35.0",
+    "eslint-plugin-prettier": "5.5.7",
+    "eslint-plugin-simple-import-sort": "12.1.1",
+    "globals": "^17.13.0",
+    "husky": "9.1.7",
+    "jsdom": "^26.1.0",
+    "lint-staged": "17.6.0",
+    "prettier": "3.9.10",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "turbo": "^2.11.10",
+    "typescript": "5.9.2",
+    "typescript-eslint": "8.43.0",
+    "vitest": "^5.0.5"
+  },
+  "peerDependencies": {
+    "react": ">=18.2.0",
+    "react-dom": ">=18.2.0"
+  }
+}
