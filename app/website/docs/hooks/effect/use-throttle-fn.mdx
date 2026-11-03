@@ -1,0 +1,84 @@
+import {UseThrottleFn} from './UseThrottleFn'
+
+# useThrottleFn
+
+给函数加节流：不管调用多频繁，每 `wait` 毫秒最多执行一次。
+
+<UseThrottleFn />
+
+## 用法
+
+```tsx
+import { useThrottleFn } from '@zyl-rhooks/hooks'
+
+const { run } = useThrottleFn(
+  () => {
+    setScrollTop(window.scrollY)
+  },
+  { wait: 200 },
+)
+
+useEventListener('scroll', run)
+```
+
+返回的 `run` 引用稳定，内部始终调用最新的 `fn`；组件卸载时会自动取消还没执行的调用。
+
+## 和防抖的区别
+
+| | 持续调用时的表现 |
+| --- | --- |
+| [useDebounceFn](./use-debounce-fn) | 一直被推迟，**停下来**之后才执行一次 |
+| `useThrottleFn` | 不被推迟，按固定频率**一直执行** |
+
+搜索联想、输入校验这类「等用户停手」的场景用防抖；scroll、resize、mousemove 这类「过程中也要持续更新」的场景用节流。
+
+## leading 与 trailing
+
+| 配置                             | 行为                                                 |
+| -------------------------------- | ---------------------------------------------------- |
+| 默认（都为 `true`）              | 间隔开始立即执行；间隔内若还有调用，结束时用最后的参数补一次 |
+| `leading: false`                 | 不立即执行，每个间隔结束时才执行                      |
+| `trailing: false`                | 只执行每个间隔开头那次，间隔内的调用全丢弃            |
+| 两个都为 `false`                 | 永远不执行                                            |
+
+补执行同样会占掉一个完整间隔，所以持续调用时的频率始终是每 `wait` 毫秒一次。
+
+## cancel 与 flush
+
+```tsx
+const { run, cancel, flush } = useThrottleFn(onScroll, { wait: 200 })
+
+cancel() // 丢弃间隔内攒着的那次调用
+flush()  // 不等间隔结束，立刻执行攒着的那次
+```
+
+## API
+
+```ts
+function useThrottleFn<TArgs extends unknown[]>(
+  fn: (...args: TArgs) => void,
+  options?: Options,
+): {
+  run: (...args: TArgs) => void
+  cancel: () => void
+  flush: () => void
+}
+```
+
+### Options
+
+| 参数       | 说明                                   | 类型      | 默认值 |
+| ---------- | -------------------------------------- | --------- | ------ |
+| `wait`     | 节流间隔（毫秒）                       | `number`  | `1000` |
+| `leading`  | 是否在间隔开始时立即执行一次           | `boolean` | `true` |
+| `trailing` | 间隔内还有调用时，结束时是否补执行一次 | `boolean` | `true` |
+
+### 返回值
+
+| 返回值   | 说明                       | 类型                       |
+| -------- | -------------------------- | -------------------------- |
+| `run`    | 节流后的函数，引用稳定     | `(...args: TArgs) => void` |
+| `cancel` | 取消还没执行的那次调用     | `() => void`               |
+| `flush`  | 立刻执行还没执行的那次调用 | `() => void`               |
+
+> 和 `useDebounceFn` 一样，`fn` 的返回值会被忽略。
