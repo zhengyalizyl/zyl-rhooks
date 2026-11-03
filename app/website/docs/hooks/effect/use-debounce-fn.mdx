@@ -1,0 +1,93 @@
+import {UseDebounceFn} from './UseDebounceFn'
+
+# useDebounceFn
+
+给函数加防抖：连续调用时只认最后一次，安静 `wait` 毫秒后才真正执行。
+
+<UseDebounceFn />
+
+## 用法
+
+```tsx
+import { useDebounceFn } from '@zyl-rhooks/hooks'
+
+const { run } = useDebounceFn(
+  (keyword: string) => {
+    search(keyword)
+  },
+  { wait: 500 },
+)
+
+<input onChange={e => run(e.target.value)} />
+```
+
+返回的 `run` 引用稳定，可以直接传给子组件、放进依赖数组；内部始终调用**最新的** `fn`，所以 `fn` 里读 props / state 不会拿到旧值。组件卸载时会自动取消还没执行的调用。
+
+## leading 与 trailing
+
+| 配置                              | 行为                                           |
+| --------------------------------- | ---------------------------------------------- |
+| 默认（`trailing: true`）          | 停止调用 `wait` 毫秒后执行一次，用最后一次的参数 |
+| `leading: true`                   | 开头立即执行一次，之后若还有调用，结束时再执行一次 |
+| `leading: true, trailing: false`  | 只执行开头那次，后面的全部丢弃                  |
+
+```tsx
+// 按钮防连点：第一次点就生效，500ms 内的重复点击直接忽略
+const { run } = useDebounceFn(submit, { wait: 500, leading: true, trailing: false })
+```
+
+## maxWait
+
+一直有调用时，防抖函数可能一直不执行。`maxWait` 给出一个上限，超过就强制执行一次：
+
+```tsx
+// 最多等 1 秒，哪怕用户一直在输入
+const { run } = useDebounceFn(search, { wait: 300, maxWait: 1000 })
+```
+
+`maxWait` 从一轮的**第一次调用**开始计时，中途的调用不会把它续上。
+
+## cancel 与 flush
+
+```tsx
+const { run, cancel, flush } = useDebounceFn(save, { wait: 1000 })
+
+cancel() // 丢弃还没执行的那次
+flush()  // 不等了，立刻执行还没执行的那次
+```
+
+没有待执行的调用时，两者都什么都不做。
+
+## API
+
+```ts
+function useDebounceFn<TArgs extends unknown[]>(
+  fn: (...args: TArgs) => void,
+  options?: Options,
+): {
+  run: (...args: TArgs) => void
+  cancel: () => void
+  flush: () => void
+}
+```
+
+### Options
+
+| 参数       | 说明                                       | 类型      | 默认值  |
+| ---------- | ------------------------------------------ | --------- | ------- |
+| `wait`     | 防抖等待时间（毫秒）                       | `number`  | `1000`  |
+| `leading`  | 是否在一轮开始时立即执行一次               | `boolean` | `false` |
+| `trailing` | 是否在一轮结束后执行最后一次               | `boolean` | `true`  |
+| `maxWait`  | 最长等待时间（毫秒），超过则强制执行一次   | `number`  | -       |
+
+### 返回值
+
+| 返回值   | 说明                       | 类型                           |
+| -------- | -------------------------- | ------------------------------ |
+| `run`    | 防抖后的函数，引用稳定     | `(...args: TArgs) => void`     |
+| `cancel` | 取消还没执行的那次调用     | `() => void`                   |
+| `flush`  | 立刻执行还没执行的那次调用 | `() => void`                   |
+
+> `fn` 的返回值会被忽略——防抖函数并不知道自己什么时候执行，拿不到有意义的返回值。需要结果的话在 `fn` 里自己 setState 或回调。
+
+需要「固定频率执行」而不是「停下来才执行」时，用 [useThrottleFn](./use-throttle-fn)。
