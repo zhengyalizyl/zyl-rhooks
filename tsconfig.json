@@ -1,0 +1,53 @@
+{
+  "compilerOptions": {
+    /* 语言与环境 */
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "useDefineForClassFields": true,
+
+    /* 模块解析：交给 tsup / bundler 处理 */
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "moduleDetection": "force",
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* 类型检查 */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true,
+
+    /* 输出：实际产物由 tsup 生成，tsc 只做类型校验 */
+    "noEmit": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+
+    /* 路径别名：直接指向源码，避免 typecheck 依赖构建顺序 */
+    "baseUrl": ".",
+    "types": ["node"],
+    "paths": {
+      "@zyl-rhooks/core": ["packages/core/src"],
+      "@zyl-rhooks/core/*": ["packages/core/src/*"],
+      "@zyl-rhooks/hooks": ["packages/hooks/src"],
+      "@zyl-rhooks/hooks/*": ["packages/hooks/src/*"]
+    }
+  },
+  "include": [
+    "packages/*/src",
+    "apps/*/src",
+    "packages/*/tsup.config.ts",
+    "*.config.ts",
+    "*.config.mts"
+  ],
+  "exclude": ["node_modules", "**/node_modules", "**/dist", "**/es", "**/build"]
+}
