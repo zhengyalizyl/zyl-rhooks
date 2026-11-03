@@ -1,0 +1,27 @@
+[
+  {
+    "type": "dir",
+    "name": "state",
+    "label": "状态型hooks"
+  },
+  {
+    "type": "dir",
+    "name": "ui",
+    "label": "UI型hooks"
+  },
+  {
+    "type": "dir",
+    "name": "dom",
+    "label": "dom型hooks"
+  },
+  {
+    "type": "dir",
+    "name": "request",
+    "label": "请求型hooks"
+  },
+  {
+    "type": "dir",
+    "name": "effect",
+    "label": "副作用型hooks"
+  }
+]
