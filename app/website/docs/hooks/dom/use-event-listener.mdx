@@ -1,0 +1,26 @@
+import {UseEventListener} from './UseEventListener'
+
+# useEventListener
+
+优雅地使用 `addEventListener`，组件卸载时自动解绑。
+
+<UseEventListener />
+
+## 用法
+
+```tsx
+import {useEventListener} from 'zyl-utils'
+
+const Demo = () => {
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [count, setCount] = useState(0);
+     
+  useEventListener('click', () => {
+    setClicks((clicks) => clicks + 1)
+  }, buttonRef)
+
+  return (
+    <button ref={buttonRef}>Click me {count}</button>
+  )
+}
+```
