@@ -1,0 +1,22 @@
+{
+  "import":"@cspell/dict-lorem-ipsum/cspell-ext.json",
+  "caseSensitive": false,
+  "dictionaries": ["zyl-words"],
+  "dictionaryDefinitions": [
+    {
+      "name": "zyl-words",
+      "path": "./.cspell/zyl-words.txt",
+      "addWords": true
+    }
+  ],
+  "ignorePaths": [
+    "**/node_modules/*",
+    "dist",
+    "build",
+    "coverage",
+    ".turbo",
+    ".next",
+    ".cspell",
+    ".vscode"
+  ]
+}
