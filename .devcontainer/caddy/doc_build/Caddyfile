@@ -1,0 +1,4 @@
+:8090,:9080,:9999,:443{
+	root * /usr/share/caddy
+	file_server
+}
