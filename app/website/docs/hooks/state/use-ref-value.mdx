@@ -1,0 +1,60 @@
+import {UseRefValue} from './UseRefValue'
+
+# useRefValue
+
+把任意值同步到一个 ref 上，`ref.current` 永远是最新的值。
+
+<UseRefValue />
+
+## 用法
+
+```tsx
+import { useRefValue } from '@zyl-rhooks/hooks'
+
+function Demo({ onChange }: { onChange: () => void }) {
+  const onChangeRef = useRefValue(onChange)
+
+  useEffect(() => {
+    const timer = setInterval(() => onChangeRef.current(), 1000)
+    return () => clearInterval(timer)
+  }, [onChangeRef])
+}
+```
+
+每次渲染都会把最新的值写进同一个 ref 对象，ref 本身的引用不变，所以：
+
+- 放进依赖数组也不会导致 effect 反复重建；
+- 定时器、事件监听、异步回调里读 `ref.current` 就能拿到最新值，不会被闭包捕获的旧值坑到。
+
+常用来兜住两类东西：**最新的回调函数**（避免 handler 变化就解绑重绑）和**最新的 props / state**（避免把它们写进依赖数组）。
+
+## 注意
+
+ref 的变化不会触发重渲染，它只适合「读」，不要拿它驱动 UI：
+
+```tsx
+const ref = useRefValue(count)
+
+// ❌ 页面不会随 ref 变化更新
+return <div>{ref.current}</div>
+```
+
+需要自己管理状态、而不只是镜像一个已有的值时，用 [useRefState](./use-ref-state)。
+
+## API
+
+```ts
+function useRefValue<T>(value: T): { current: T }
+```
+
+### 参数
+
+| 参数    | 说明             | 类型 | 默认值 |
+| ------- | ---------------- | ---- | ------ |
+| `value` | 需要同步的值     | `T`  | -      |
+
+### 返回值
+
+| 返回值 | 说明                                   | 类型             |
+| ------ | -------------------------------------- | ---------------- |
+| `ref`  | 引用稳定的 ref，`current` 始终是最新值 | `{ current: T }` |
