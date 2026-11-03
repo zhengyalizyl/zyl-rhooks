@@ -1,0 +1,59 @@
+import {UseClickAway} from './UseClickAway'
+
+# useClickAway
+
+监听点击目标元素外部的事件，常用于关闭弹层、下拉菜单。
+
+<UseClickAway />
+
+## 用法
+
+```tsx
+import { useClickAway } from '@zyl-rhooks/hooks'
+
+const panelRef = useRef<HTMLDivElement>(null)
+
+useClickAway(() => {
+  setOpen(false)
+}, panelRef)
+```
+
+事件统一挂在 `document` 上，触发时才去解析 target，所以可以放心传还没挂载的 ref。
+
+## 多个目标
+
+触发元素（比如那个展开按钮）通常也要算作「内部」，否则点它会先被判成点击外部、再被 `onClick` 打开，状态会打架。传数组即可：
+
+```tsx
+useClickAway(() => setOpen(false), [buttonRef, panelRef])
+```
+
+只要**任意**一个 target 还没解析出元素（例如弹层没渲染时 `ref.current` 还是 `null`），回调就不会触发，避免组件刚挂载时的误判。
+
+## 自定义事件
+
+默认监听 `click`。想在按下鼠标的瞬间就关闭，或者要同时覆盖移动端，可以传事件名数组：
+
+```tsx
+useClickAway(() => setOpen(false), panelRef, ['mousedown', 'touchstart'])
+```
+
+## API
+
+```ts
+function useClickAway<T extends Event = Event>(
+  onClickAway: (event: T) => void,
+  target: BasicTarget | BasicTarget[],
+  eventName?: string | string[],
+): void
+```
+
+### 参数
+
+| 参数          | 说明                                     | 类型                             | 默认值    |
+| ------------- | ---------------------------------------- | -------------------------------- | --------- |
+| `onClickAway` | 点击外部时触发的回调                     | `(event: T) => void`             | -         |
+| `target`      | 「内部」区域，元素 / ref / 函数，可传数组 | `BasicTarget \| BasicTarget[]`   | -         |
+| `eventName`   | 监听的事件名，可传数组                   | `string \| string[]`             | `'click'` |
+
+`BasicTarget` 的三种形态见 [useEventTarget](./use-event-target)。
