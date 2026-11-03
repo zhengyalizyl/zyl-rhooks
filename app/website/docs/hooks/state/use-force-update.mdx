@@ -1,0 +1,40 @@
+import {UseForceUpdate} from './UseForceUpdate'
+
+# useForceUpdate
+
+返回一个强制组件重新渲染的函数。
+
+<UseForceUpdate />
+
+## 用法
+
+```tsx
+import { useForceUpdate } from '@zyl-rhooks/hooks'
+
+const forceUpdate = useForceUpdate()
+
+const handleClick = () => {
+  cacheRef.current.push(item) // 改了 React 感知不到的数据
+  forceUpdate() // 手动触发一次渲染
+}
+```
+
+返回的函数引用稳定，可以安全放进依赖数组或传给子组件。
+
+## 什么时候用
+
+只在值不由 state 驱动、React 感知不到变化时用：ref 里存的数据、外部 store、`localStorage`、第三方实例的内部状态等。
+
+能用 state 表达的状态就老老实实用 state——`forceUpdate` 会跳过 React 的更新语义，滥用会让渲染时机变得难以追踪。
+
+## API
+
+```ts
+function useForceUpdate(): () => void
+```
+
+### 返回值
+
+| 返回值        | 说明                                 | 类型         |
+| ------------- | ------------------------------------ | ------------ |
+| `forceUpdate` | 调用后触发一次重渲染，引用稳定       | `() => void` |
