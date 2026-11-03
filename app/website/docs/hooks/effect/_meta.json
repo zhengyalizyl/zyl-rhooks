@@ -1,0 +1,12 @@
+[
+  {
+    "type":"file",
+    "name":"use-debounce-fn",
+    "label":"useDebounceFn"
+  },
+  {
+    "type":"file",
+    "name":"use-throttle-fn",
+    "label":"useThrottleFn"
+  }
+]
