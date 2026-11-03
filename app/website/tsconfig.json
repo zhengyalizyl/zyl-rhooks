@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    /* 文档站是应用不是库，不产出声明文件 */
+    "declaration": false,
+    "declarationMap": false,
+
+    /* baseUrl/paths 继承下来是按根目录解析的，这里按本包重新声明 */
+    "baseUrl": ".",
+    "paths": {
+      "@zyl-rhooks/core": ["../../packages/core/src"],
+      "@zyl-rhooks/core/*": ["../../packages/core/src/*"],
+      "@zyl-rhooks/hooks": ["../../packages/hooks/src"],
+      "@zyl-rhooks/hooks/*": ["../../packages/hooks/src/*"]
+    }
+  },
+  "include": ["rspress.config.ts", "src", "docs", "theme"],
+  "exclude": ["node_modules", "doc_build", "es"]
+}
