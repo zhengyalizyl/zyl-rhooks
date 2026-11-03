@@ -1,0 +1,123 @@
+import {UseRequest} from './UseRequest'
+
+# useRequest
+
+管理异步请求的状态：自动/手动触发、loading、error、竞态处理，以及 refresh / mutate / cancel。
+
+<UseRequest />
+
+## 用法
+
+传入一个返回 Promise 的函数即可，默认在组件挂载时请求一次：
+
+```tsx
+import { useRequest } from '@zyl-rhooks/hooks'
+
+const { data, error, loading } = useRequest(() => fetch('/api/user').then(res => res.json()))
+```
+
+`service` 可以带参数，配合 `defaultParams` 指定自动请求时用的参数：
+
+```tsx
+const { data } = useRequest(fetchUser, { defaultParams: [1] })
+```
+
+## 手动触发
+
+`manual: true` 时不会自动请求，完全由 `run` / `runAsync` 驱动：
+
+```tsx
+const { data, loading, run } = useRequest(login, { manual: true })
+
+<button disabled={loading} onClick={() => run(username, password)}>登录</button>
+```
+
+- `run`：不返回 Promise，错误只进 `error` 状态和 `onError`，不会变成未捕获的 rejection；
+- `runAsync`：返回 Promise，**需要自己 catch**，适合要串联后续逻辑的场景。
+
+```tsx
+try {
+  const user = await runAsync(username, password)
+  navigate(`/user/${user.id}`)
+} catch (e) {
+  message.error(e.message)
+}
+```
+
+## 竞态处理
+
+内部用自增计数标记每次请求，**只有最后一次发出的请求能写状态、能触发回调**。快慢请求交叉返回时（比如搜索框连续输入），先发后回的旧请求会被直接丢弃，不会出现旧数据覆盖新数据。
+
+被丢弃的请求对应的 Promise 仍然正常 resolve / reject，只是不再影响 hook 的状态——所以 `await runAsync()` 的调用方总能拿到自己那次的结果。
+
+组件卸载后也不会再写状态。
+
+## 依赖变化自动请求
+
+```tsx
+const { data } = useRequest(() => fetchUser(id), { refreshDeps: [id] })
+```
+
+`refreshDeps` 里的值变化时，会用**上一次的参数**重新请求（`manual: true` 时不生效）。
+
+## 延迟请求
+
+有些请求要等别的数据就绪才能发，用 `ready`：
+
+```tsx
+const { data } = useRequest(() => fetchDetail(userId!), { ready: userId != null })
+```
+
+`ready` 为 `false` 时不发请求、`loading` 保持 `false`；由 `false` 变成 `true` 时自动补发一次。
+
+## 手动改数据
+
+`mutate` 直接修改 `data`，不发请求，常用于乐观更新：
+
+```tsx
+mutate(old => ({ ...old!, liked: true }))
+await runAsync() // 失败了可以再 mutate 回去
+```
+
+## API
+
+```ts
+function useRequest<TData, TParams extends unknown[]>(
+  service: (...params: TParams) => Promise<TData>,
+  options?: Options<TData, TParams>,
+): Result<TData, TParams>
+```
+
+### Options
+
+| 参数            | 说明                                                     | 类型                                                       | 默认值  |
+| --------------- | -------------------------------------------------------- | ---------------------------------------------------------- | ------- |
+| `manual`        | 是否手动触发，`true` 时挂载不自动请求                      | `boolean`                                                   | `false` |
+| `defaultParams` | 自动请求时带的参数                                        | `TParams`                                                   | -       |
+| `ready`         | 为 `false` 时不请求，变 `true` 时自动补发                  | `boolean`                                                   | `true`  |
+| `refreshDeps`   | 依赖变化时用上次的参数重新请求                            | `unknown[]`                                                 | -       |
+| `onBefore`      | 请求发出前触发                                            | `(params: TParams) => void`                                 | -       |
+| `onSuccess`     | 请求成功时触发                                            | `(data: TData, params: TParams) => void`                    | -       |
+| `onError`       | 请求失败时触发                                            | `(error: Error, params: TParams) => void`                   | -       |
+| `onFinally`     | 成功失败都会触发                                          | `(params: TParams, data?: TData, error?: Error) => void`    | -       |
+
+### Result
+
+| 返回值         | 说明                                     | 类型                                                      |
+| -------------- | ---------------------------------------- | --------------------------------------------------------- |
+| `data`         | 请求返回的数据                           | `TData \| undefined`                                       |
+| `error`        | 请求抛出的错误，成功后清空               | `Error \| undefined`                                       |
+| `loading`      | 是否正在请求                             | `boolean`                                                  |
+| `params`       | 最近一次请求用的参数                     | `TParams \| []`                                            |
+| `run`          | 发请求，不抛错                           | `(...params: TParams) => void`                             |
+| `runAsync`     | 发请求，返回 Promise，需自行 catch       | `(...params: TParams) => Promise<TData>`                   |
+| `refresh`      | 用上次的参数重新请求                     | `() => void`                                               |
+| `refreshAsync` | 用上次的参数重新请求，返回 Promise       | `() => Promise<TData>`                                     |
+| `mutate`       | 直接修改 `data`，不发请求                | `(data: TData \| ((old: TData \| undefined) => TData)) => void` |
+| `cancel`       | 丢弃当前请求的结果并结束 loading         | `() => void`                                               |
+
+## 暂未支持
+
+轮询、防抖 / 节流、缓存与 SWR、失败重试、屏幕聚焦重新请求——这些后续按需补充。
+
+另外 `cancel` 只是丢弃结果，不会真正中断底层请求（需要的话请在 `service` 里自己接 `AbortController`）。
