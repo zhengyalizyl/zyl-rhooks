@@ -1,0 +1,29 @@
+{
+  "name": "@zyl-rhooks/website",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "module": "es/index.js",
+  "types":"es/index.d.mts",
+  "scripts": {
+    "dev": "rspress dev",
+    "build": "rspress build",
+    "preview": "rspress preview"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.5.2",
+  "devDependencies": {
+    "rspress": "1.47.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0"
+  },
+  "peerDependencies": {
+    "react":"^19.3.0",
+    "react-dom":"^19.3.0"
+  },
+  "dependencies": {
+    "@zyl-rhooks/core":"workspace:*",
+    "@zyl-rhooks/hooks":"workspace:*"
+  }
+}
