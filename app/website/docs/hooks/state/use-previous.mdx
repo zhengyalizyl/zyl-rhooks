@@ -1,0 +1,48 @@
+import {UsePrevious} from './UsePrevious'
+
+# usePrevious
+
+保存上一次渲染时的状态值，首次渲染返回 `undefined`。
+
+<UsePrevious />
+
+## 用法
+
+```tsx
+import { usePrevious } from '@zyl-rhooks/hooks'
+
+const previousCount = usePrevious(count)
+```
+
+## 自定义更新时机
+
+默认用 `Object.is` 比较，值发生变化时才记录上一个值。通过 `shouldUpdate` 可以自定义这个判断，返回 `true` 时才把当前值滚动为「上一个值」。
+
+```tsx
+// 只有变化幅度不小于 10 时才记录
+const shouldUpdate = (prev: number | undefined, next: number) =>
+  prev === undefined || Math.abs(next - prev) >= 10
+
+const previousCount = usePrevious(count, shouldUpdate)
+```
+
+## API
+
+```ts
+function usePrevious<T>(state: T, shouldUpdate?: ShouldUpdateFunc<T>): T | undefined
+
+type ShouldUpdateFunc<T> = (prev: T | undefined, next: T) => boolean
+```
+
+### 参数
+
+| 参数           | 说明                                       | 类型                    | 默认值                      |
+| -------------- | ------------------------------------------ | ----------------------- | --------------------------- |
+| `state`        | 需要追踪的值                               | `T`                     | -                           |
+| `shouldUpdate` | 自定义是否更新「上一个值」，返回 `true` 更新 | `ShouldUpdateFunc<T>`   | `(prev, next) => !Object.is(prev, next)` |
+
+### 返回值
+
+| 返回值     | 说明                               | 类型           |
+| ---------- | ---------------------------------- | -------------- |
+| `previous` | 上一次的值，首次渲染为 `undefined` | `T \| undefined` |
